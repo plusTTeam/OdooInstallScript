@@ -126,7 +126,6 @@ echo -e "\n==== Installing ODOO Server ===="
 if [ -z "$GITHUB_ACESS_TOKEN" ]; then
   sudo git clone --depth 1 --branch $OE_VERSION "https://${$ODOO_COMUNITY_REPO}" $OE_HOME_EXT/
 else
-      echo "\$var is NOT empty"
   sudo git clone --depth 1 --branch $OE_VERSION "https://${GITHUB_USER}:${GITHUB_ACESS_TOKEN}@${ODOO_COMUNITY_REPO}.git" $OE_HOME_EXT/
 fi
 
