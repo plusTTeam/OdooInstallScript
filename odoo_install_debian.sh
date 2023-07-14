@@ -85,8 +85,11 @@ sudo apt-get install git python3 python3-pip build-essential wget python3-dev py
 sudo apt-get install libzip-dev libldap2-dev libsasl2-dev python3-setuptools node-less gdebi -y
 
 echo -e "\n---- Install python packages/requirements ----"
-sudo pip3 install -r ${ODOO_COMUNITY_REPO}/raw/${OE_VERSION}/requirements.txt
-
+if [ -z "$GITHUB_ACESS_TOKEN" ]; then
+  sudo pip3 install -r ${ODOO_COMUNITY_REPO}/raw/${OE_VERSION}/requirements.txt
+else
+  sudo pip3 install -r "https://${GITHUB_USER}:${GITHUB_ACESS_TOKEN}@${ODOO_COMUNITY_REPO}/raw/${OE_VERSION}/requirements.txt"
+fi
 echo -e "\n---- Installing nodeJS NPM and rtlcss for LTR support ----"
 sudo apt-get install nodejs npm -y
 sudo npm install -g rtlcss
