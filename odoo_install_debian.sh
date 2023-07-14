@@ -151,7 +151,7 @@ if [ $IS_ENTERPRISE = "True" ]; then
           GITHUB_RESPONSE=$(sudo git clone --depth 1 --branch $OE_VERSION "https://${$ODOO_ENTERPRISE_REPO}" "$OE_HOME/enterprise/addons" 2>&1)
       done
     else
-      sudo git clone --depth 1 --branch $OE_VERSION "https://${GITHUB_USER}:${GITHUB_ACESS_TOKEN}@${ODOO_ENTERPRISE_REPO}.git" "$OE_HOME/enterprise/addons" 2>&1)
+      sudo git clone --depth 1 --branch $OE_VERSION "https://${GITHUB_USER}:${GITHUB_ACESS_TOKEN}@${ODOO_ENTERPRISE_REPO}.git" "$OE_HOME/enterprise/addons"
     fi
 
     echo -e "\n---- Added Enterprise code under $OE_HOME/enterprise/addons ----"
