@@ -39,6 +39,15 @@ OE_CONFIG="${OE_USER}-server"
 WEBSITE_NAME="_"
 # Set the default Odoo longpolling port (you still have to use -c /etc/odoo-server.conf for example to use this.)
 LONGPOLLING_PORT="8072"
+# Set to true if you want to install it, false if you don't need it or have it already installed.
+INSTALL_POSTGRESQL="True"
+# Git Repository of Odoo Comunity
+ODOO_COMUNITY_REPO="github.com/odoo/odoo"
+# Git Repository of Odoo Enterprise
+ODOO_ENTERPRISE_REPO="github.com/odoo/enterprise"
+# Github Access Token to clone private repositories
+GITHUB_USER="plustteam"
+GITHUB_ACESS_TOKEN="[ACCESS_TOKEN]"
 
 ##
 ###  WKHTMLTOPDF download links
@@ -56,15 +65,18 @@ echo -e "\n---- Update Server ----"
 sudo apt-get update
 sudo apt-get upgrade -y
 
-#--------------------------------------------------
-# Install PostgreSQL Server
-#--------------------------------------------------
-echo -e "\n---- Install PostgreSQL Server ----"
-sudo apt-get install postgresql -y
+if [ $INSTALL_POSTGRESQL = "True" ]; then
+  #--------------------------------------------------
+  # Install PostgreSQL Server
+  #--------------------------------------------------
+  echo -e "\n---- Install PostgreSQL Server ----"
+  sudo apt-get install postgresql -y
 
-echo -e "\n---- Creating the ODOO PostgreSQL User  ----"
-sudo su - postgres -c "createuser -s $OE_USER" 2> /dev/null || true
-
+  echo -e "\n---- Creating the ODOO PostgreSQL User  ----"
+  sudo su - postgres -c "createuser -s $OE_USER" 2> /dev/null || true
+else
+  echo "PostgreSQL isn't installed due to the choice of the user!"
+fi
 #--------------------------------------------------
 # Install Dependencies
 #--------------------------------------------------
@@ -73,7 +85,7 @@ sudo apt-get install git python3 python3-pip build-essential wget python3-dev py
 sudo apt-get install libzip-dev libldap2-dev libsasl2-dev python3-setuptools node-less gdebi -y
 
 echo -e "\n---- Install python packages/requirements ----"
-sudo pip3 install -r https://github.com/odoo/odoo/raw/${OE_VERSION}/requirements.txt
+sudo pip3 install -r ${ODOO_COMUNITY_REPO}/raw/${OE_VERSION}/requirements.txt
 
 echo -e "\n---- Installing nodeJS NPM and rtlcss for LTR support ----"
 sudo apt-get install nodejs npm -y
@@ -111,7 +123,13 @@ sudo chown $OE_USER:$OE_USER /var/log/$OE_USER
 # Install ODOO
 #--------------------------------------------------
 echo -e "\n==== Installing ODOO Server ===="
-sudo git clone --depth 1 --branch $OE_VERSION https://www.github.com/odoo/odoo $OE_HOME_EXT/
+if [ -z "$GITHUB_ACESS_TOKEN" ]; then
+  sudo git clone --depth 1 --branch $OE_VERSION "https://${$ODOO_COMUNITY_REPO}" $OE_HOME_EXT/
+else
+      echo "\$var is NOT empty"
+  sudo git clone --depth 1 --branch $OE_VERSION "https://${GITHUB_USER}:${GITHUB_ACESS_TOKEN}@${ODOO_COMUNITY_REPO}.git" $OE_HOME_EXT/
+fi
+
 
 if [ $IS_ENTERPRISE = "True" ]; then
     # Odoo Enterprise install!
@@ -119,17 +137,20 @@ if [ $IS_ENTERPRISE = "True" ]; then
     sudo ln -s /usr/bin/nodejs /usr/bin/node
     sudo su $OE_USER -c "mkdir $OE_HOME/enterprise"
     sudo su $OE_USER -c "mkdir $OE_HOME/enterprise/addons"
-
-    GITHUB_RESPONSE=$(sudo git clone --depth 1 --branch $OE_VERSION https://www.github.com/odoo/enterprise "$OE_HOME/enterprise/addons" 2>&1)
-    while [[ $GITHUB_RESPONSE == *"Authentication"* ]]; do
-        echo "------------------------WARNING------------------------------"
-        echo "Your authentication with Github has failed! Please try again."
-        printf "In order to clone and install the Odoo enterprise version you \nneed to be an offical Odoo partner and you need access to\nhttp://github.com/odoo/enterprise.\n"
-        echo "TIP: Press ctrl+c to stop this script."
-        echo "-------------------------------------------------------------"
-        echo " "
-        GITHUB_RESPONSE=$(sudo git clone --depth 1 --branch $OE_VERSION https://www.github.com/odoo/enterprise "$OE_HOME/enterprise/addons" 2>&1)
-    done
+    if [ -z "$GITHUB_ACESS_TOKEN" ]; then
+      GITHUB_RESPONSE=$(sudo git clone --depth 1 --branch $OE_VERSION "https://${$ODOO_ENTERPRISE_REPO}" "$OE_HOME/enterprise/addons" 2>&1)
+      while [[ $GITHUB_RESPONSE == *"Authentication"* ]]; do
+          echo "------------------------WARNING------------------------------"
+          echo "Your authentication with Github has failed! Please try again."
+          printf "In order to clone and install the Odoo enterprise version you \nneed to be an offical Odoo partner and you need access to\nhttp://github.com/odoo/enterprise.\n"
+          echo "TIP: Press ctrl+c to stop this script."
+          echo "-------------------------------------------------------------"
+          echo " "
+          GITHUB_RESPONSE=$(sudo git clone --depth 1 --branch $OE_VERSION "https://${$ODOO_ENTERPRISE_REPO}" "$OE_HOME/enterprise/addons" 2>&1)
+      done
+    else
+      sudo git clone --depth 1 --branch $OE_VERSION "https://${GITHUB_USER}:${GITHUB_ACESS_TOKEN}@${ODOO_ENTERPRISE_REPO}.git" "$OE_HOME/enterprise/addons" 2>&1)
+    fi
 
     echo -e "\n---- Added Enterprise code under $OE_HOME/enterprise/addons ----"
     echo -e "\n---- Installing Enterprise specific libraries ----"
